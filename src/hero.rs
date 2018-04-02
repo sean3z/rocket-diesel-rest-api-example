@@ -28,12 +28,10 @@ impl Hero {
     }
 
     pub fn update(id: i32, hero: Hero, connection: &MysqlConnection) -> bool {
-        let query = diesel::update(heroes::table.find(id)).set(&hero).execute(connection);
-        !query.is_err()
+        diesel::update(heroes::table.find(id)).set(&hero).execute(connection).is_ok()
     }
 
     pub fn delete(id: i32, connection: &MysqlConnection) -> bool {
-        let query = diesel::delete(heroes::table.find(id)).execute(connection);
-        !query.is_err()
+        diesel::delete(heroes::table.find(id)).execute(connection).is_ok()
     }
 }
