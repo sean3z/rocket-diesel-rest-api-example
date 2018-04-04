@@ -9,7 +9,7 @@ use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
 pub type MysqlPool = Pool<ConnectionManager<MysqlConnection>>;
 
 // The URL to the database, set via the `DATABASE_URL` environment variable.
-static DATABASE_URL: &'static str = env!("DATABASE_URL");
+static DATABASE_URL: &str = env!("DATABASE_URL");
 
 /// Initialize the database pool.
 pub fn connect() -> MysqlPool {
