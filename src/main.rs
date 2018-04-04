@@ -8,24 +8,15 @@ extern crate rocket;
 
 use rocket_contrib::{Json, Value};
 
-mod hero;
-use hero::{Hero};
-
 mod db;
 mod schema;
 
+mod hero;
+use hero::Hero;
+
 #[post("/", data = "<hero>")]
 fn create(hero: Json<Hero>, connection: db::Connection) -> Json<Hero> {
-    let hero = hero.into_inner();
-
-    let insert = Hero {
-        id: None,
-        name: hero.name,
-        identity: hero.identity,
-        hometown: hero.hometown,
-        age: hero.age
-    };
-
+    let insert = Hero { id: None, ..hero.into_inner() };
     Json(Hero::create(insert, &connection))
 }
 
@@ -36,16 +27,7 @@ fn read(connection: db::Connection) -> Json<Value> {
 
 #[put("/<id>", data = "<hero>")]
 fn update(id: i32, hero: Json<Hero>, connection: db::Connection) -> Json<Value> {
-    let hero = hero.into_inner();
-
-    let update = Hero {
-        id: Some(id),
-        name: hero.name,
-        identity: hero.identity,
-        hometown: hero.hometown,
-        age: hero.age
-    };
-    
+    let update = Hero { id: Some(id), ..hero.into_inner() };
     Json(json!({
         "success": Hero::update(id, update, &connection)
     }))
