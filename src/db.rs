@@ -2,22 +2,23 @@ use std::ops::Deref;
 use rocket::http::Status;
 use rocket::request::{self, FromRequest};
 use rocket::{Request, State, Outcome};
-
-use r2d2;
-use r2d2_diesel::ConnectionManager;
-
 use diesel::mysql::MysqlConnection;
+use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
 
-pub type Pool = r2d2::Pool<ConnectionManager<MysqlConnection>>;
-static DATABASE_URL: &'static str = env!("DATABASE_URL");
+// An alias to the type for a pool of Diesel Mysql Connection
+pub type MysqlPool = Pool<ConnectionManager<MysqlConnection>>;
 
-pub fn connect() -> Pool {
+// The URL to the database, set via the `DATABASE_URL` environment variable.
+static DATABASE_URL: &str = env!("DATABASE_URL");
+
+/// Initialize the database pool.
+pub fn connect() -> MysqlPool {
     let manager = ConnectionManager::<MysqlConnection>::new(DATABASE_URL);
-    r2d2::Pool::builder().build(manager).expect("Failed to create pool")
+    Pool::new(manager).expect("Failed to create pool")
 }
 
 // Connection request guard type: a wrapper around an r2d2 pooled connection.
-pub struct Connection(pub r2d2::PooledConnection<ConnectionManager<MysqlConnection>>);
+pub struct Connection(pub PooledConnection<ConnectionManager<MysqlConnection>>);
 
 /// Attempts to retrieve a single connection from the managed database pool. If
 /// no pool is currently managed, fails with an `InternalServerError` status. If
@@ -25,8 +26,8 @@ pub struct Connection(pub r2d2::PooledConnection<ConnectionManager<MysqlConnecti
 impl<'a, 'r> FromRequest<'a, 'r> for Connection {
     type Error = ();
 
-    fn from_request(request: &'a Request<'r>) -> request::Outcome<Connection, ()> {
-        let pool = request.guard::<State<Pool>>()?;
+    fn from_request(request: &'a Request<'r>) -> request::Outcome<Self, Self::Error> {
+        let pool = request.guard::<State<MysqlPool>>()?;
         match pool.get() {
             Ok(conn) => Outcome::Success(Connection(conn)),
             Err(_) => Outcome::Failure((Status::ServiceUnavailable, ()))
@@ -34,7 +35,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for Connection {
     }
 }
 
-// For the convenience of using an &Connection as an &SqliteConnection.
+// For the convenience of using an &Connection as an &MysqlConnection.
 impl Deref for Connection {
     type Target = MysqlConnection;
 

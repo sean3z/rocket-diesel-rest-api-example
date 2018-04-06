@@ -24,7 +24,7 @@ impl Hero {
     }
 
     pub fn read(connection: &MysqlConnection) -> Vec<Hero> {
-        heroes::table.order(heroes::id.asc()).load::<Hero>(connection).unwrap()
+        heroes::table.order(heroes::id).load::<Hero>(connection).unwrap()
     }
 
     pub fn update(id: i32, hero: Hero, connection: &MysqlConnection) -> bool {
