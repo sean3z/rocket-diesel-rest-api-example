@@ -4,7 +4,7 @@ use diesel::mysql::MysqlConnection;
 use schema::heroes;
 
 #[table_name = "heroes"]
-#[derive(Serialize, Deserialize, Queryable, Insertable, AsChangeset)]
+#[derive(AsChangeset, Serialize, Deserialize, Queryable, Insertable, AsChangeset)]
 pub struct Hero {
     pub id: Option<i32>,
     pub name: String,
