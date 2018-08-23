@@ -25,7 +25,7 @@ export DATABASE_URL=mysql://user:pass@localhost/heroes
 
 **3. Run Database migration**
 ```bash
-disesel migratation run
+diesel migration run
 ```
 
 **4. Build and run the app using cargo**
