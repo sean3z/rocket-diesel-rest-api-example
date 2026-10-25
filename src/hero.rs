@@ -7,7 +7,7 @@ use crate::schema::heroes;
 #[derive(AsChangeset, Serialize, Deserialize, Queryable, Insertable)]
 #[diesel(table_name = heroes)]
 pub struct Hero {
-    #[diesel(treat_none_as_default_value = true)]
+    #[diesel(deserialize_as = i32)]
     pub id: Option<i32>,
     pub name: String,
     pub identity: String,
