@@ -1,49 +1,51 @@
-#![feature(plugin)]
-#![plugin(rocket_codegen)]
-
-extern crate rocket;
-#[macro_use] extern crate rocket_contrib;
-#[macro_use] extern crate serde_derive;
-#[macro_use] extern crate diesel;
-
-use rocket_contrib::{Json, Value};
-
 mod db;
+mod hero;
 mod schema;
 
-mod hero;
 use hero::Hero;
+use rocket::serde::json::{json, Json, Value};
+use rocket::{delete, get, post, put, routes};
 
 #[post("/", data = "<hero>")]
-fn create(hero: Json<Hero>, connection: db::Connection) -> Json<Hero> {
-    let insert = Hero { id: None, ..hero.into_inner() };
-    Json(Hero::create(insert, &connection))
+fn create(hero: Json<Hero>, mut connection: db::Connection) -> Json<Hero> {
+    let insert = Hero {
+        id: None,
+        ..hero.into_inner()
+    };
+    Json(Hero::create(insert, &mut connection))
 }
 
 #[get("/")]
-fn read(connection: db::Connection) -> Json<Value> {
-    Json(json!(Hero::read(&connection)))
+fn read(mut connection: db::Connection) -> Json<Value> {
+    Json(json!(Hero::read(&mut connection)))
 }
 
 #[put("/<id>", data = "<hero>")]
-fn update(id: i32, hero: Json<Hero>, connection: db::Connection) -> Json<Value> {
-    let update = Hero { id: Some(id), ..hero.into_inner() };
+fn update(id: i32, hero: Json<Hero>, mut connection: db::Connection) -> Json<Value> {
+    let update = Hero {
+        id: Some(id),
+        ..hero.into_inner()
+    };
     Json(json!({
-        "success": Hero::update(id, update, &connection)
+        "success": Hero::update(id, update, &mut connection)
     }))
 }
 
 #[delete("/<id>")]
-fn delete(id: i32, connection: db::Connection) -> Json<Value> {
+fn delete(id: i32, mut connection: db::Connection) -> Json<Value> {
     Json(json!({
-        "success": Hero::delete(id, &connection)
+        "success": Hero::delete(id, &mut connection)
     }))
 }
 
-fn main() {
-    rocket::ignite()
+#[rocket::main]
+async fn main() -> Result<(), rocket::Error> {
+    let _rocket = rocket::build()
         .manage(db::connect())
         .mount("/hero", routes![create, update, delete])
         .mount("/heroes", routes![read])
-        .launch();
+        .launch()
+        .await?;
+
+    Ok(())
 }
